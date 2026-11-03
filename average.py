@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from PIL import Image
@@ -79,6 +80,7 @@ def main():
     image = Image.open(src).convert("RGB")
     width, height = image.size
 
+    started = time.perf_counter()
     if mode == "S":
         average(image, square)
         worker_count = 1
@@ -105,10 +107,11 @@ def main():
         for y0, job, raw in zip(starts, jobs, results):
             band = Image.frombytes("RGB", job[1], raw)
             image.paste(band, (0, y0))
+    seconds = time.perf_counter() - started
 
     dst = Path(__file__).resolve().parent / "result.jpg"
     image.save(dst, "JPEG", quality=95)
-    print(f"wrote {dst.name} ({width}x{height}, square {square}, mode {mode}, processes {worker_count})")
+    print(f"wrote {dst.name} ({width}x{height}, square {square}, mode {mode}, processes {worker_count}, time {seconds:.3f}s)")
 
 
 if __name__ == "__main__":
