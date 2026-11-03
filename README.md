@@ -22,3 +22,10 @@ After that we can use it to average our image's pixels.
 Discussion of Single and Concurrent execution:
 The code is able to run both single and multiple core execution. I used python as language to make my code much more cleaner for preprocessing and etc parts. But python also has some drawbacks related to concurrency. Python threads are not giving physical concurrency by nature, so they just run on same physical core no matter how many threads we fire. So, to tackle this problem, I used processes to achieve physical level concurrency. The code first takes the number of cores at the machine and then launches same amount of processes which are binded to separate workers - cores. So, it tries to leverage power of each physical core.
 
+Discussion of Results:
+The results (execution times) differ based on the size of the image. The reason is that the whole program is not parallel, only averaging part is parallel; preprocessing and postprocessing of image is still done by main thread. 
+
+If we take image size small, single process will achieve better results than multi-core one, because launching those cores alone also takes to much CPU cycle, so there is overhead (while multi-core one launches, single core already finishes). However when we increase image size, then multicore starts to shine:
+With 2000x2000 image, multi-core was 2.8x faster.
+With 8000x8000 image, multi-core was 4x faster.
+With small picture (40x40), multicore was 1.5x slower.  
