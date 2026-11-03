@@ -1,6 +1,6 @@
 import os
 import sys
-import threading
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from PIL import Image
 
@@ -48,6 +48,13 @@ def average(image, square):
                     pixels[x0 + i, y0 + j] = color
 
 
+def average_band(item):
+    raw, size, square = item
+    band = Image.frombytes("RGB", size, raw)
+    average(band, square)
+    return band.tobytes()
+
+
 def main():
     if len(sys.argv) != 4:
         raise SystemExit(1)
@@ -74,33 +81,34 @@ def main():
 
     if mode == "S":
         average(image, square)
-        thread_count = 1
+        worker_count = 1
     else:
         rows = list(range(0, height, square))
-        thread_count = min(os.cpu_count() or 1, len(rows))
-        chunk = (len(rows) + thread_count - 1) // thread_count
-        bands = []
-        for i in range(thread_count):
-            part = rows[i * chunk:(i + 1) * chunk]
-            if not part:
-                continue
+        worker_count = min(os.cpu_count() or 1, len(rows))
+        base, extra = divmod(len(rows), worker_count)
+        starts = []
+        jobs = []
+        index = 0
+        for i in range(worker_count):
+            take = base + (1 if i < extra else 0)
+            part = rows[index:index + take]
+            index += take
             y0 = part[0]
             y1 = min(part[-1] + square, height)
-            bands.append((y0, image.crop((0, y0, width, y1)).copy()))
+            band = image.crop((0, y0, width, y1)).copy()
+            starts.append(y0)
+            jobs.append((band.tobytes(), band.size, square))
 
-        threads = []
-        for y0, band in bands:
-            thread = threading.Thread(target=average, args=(band, square))
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
-        for y0, band in bands:
+        worker_count = len(jobs)
+        with ProcessPoolExecutor(max_workers=worker_count) as pool:
+            results = pool.map(average_band, jobs)
+        for y0, job, raw in zip(starts, jobs, results):
+            band = Image.frombytes("RGB", job[1], raw)
             image.paste(band, (0, y0))
 
     dst = Path(__file__).resolve().parent / "result.jpg"
     image.save(dst, "JPEG", quality=95)
-    print(f"wrote {dst.name} ({width}x{height}, square {square}, mode {mode}, threads {thread_count})")
+    print(f"wrote {dst.name} ({width}x{height}, square {square}, mode {mode}, processes {worker_count})")
 
 
 if __name__ == "__main__":
