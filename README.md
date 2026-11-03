@@ -1,5 +1,9 @@
 ## How to run the code
 
+```text
+pip install Pillow
+```
+
 Command:
 
 ```text
