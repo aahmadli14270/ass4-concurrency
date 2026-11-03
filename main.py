@@ -73,8 +73,8 @@ def main():
     if mode not in ("S", "M"):
         print("processing mode must be S or M")
         raise SystemExit(1)
-    if src.suffix.lower() not in (".jpg", ".jpeg"):
-        print("file must be a jpg")
+    if src.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+        print("file must be a jpg or png")
         raise SystemExit(1)
 
     image = Image.open(src).convert("RGB")
