@@ -98,7 +98,7 @@ def main():
         for y0, band in bands:
             image.paste(band, (0, y0))
 
-    dst = Path(__file__).resolve().parent / "averaged.jpeg"
+    dst = Path(__file__).resolve().parent / "result.jpg"
     image.save(dst, "JPEG", quality=95)
     print(f"wrote {dst.name} ({width}x{height}, square {square}, mode {mode}, threads {thread_count})")
 
