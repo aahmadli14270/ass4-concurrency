@@ -1,8 +1,12 @@
+import sys
 from pathlib import Path
 from PIL import Image
 
+if len(sys.argv) != 2:
+    raise SystemExit(1)
+
 root = Path(__file__).resolve().parent.parent
-src = root / "images (2).jpeg"
+src = Path(sys.argv[1])
 dst = root / "averaged.jpeg"
 square = 16
 
